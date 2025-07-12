@@ -55,7 +55,7 @@ def main():
     if not items:
         return
 
-    header = "🗞️ <b>Știrile din ultimul sfert de oră</b>\n"
+    header = "📰 <b>Știrile din ultimul sfert de oră</b>\n\n"
     message = header
     divider = "\n────────────\n"
 
