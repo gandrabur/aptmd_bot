@@ -1,6 +1,7 @@
 import os
 import feedparser
 import html
+import asyncio
 from datetime import datetime, timedelta
 from telegram import Bot
 from dotenv import load_dotenv
@@ -26,7 +27,7 @@ MAX_LENGTH = 4000
 
 def fetch_recent_articles():
     articles = []
-    cutoff = datetime.now() - timedelta(minutes=15)
+    cutoff = datetime.now() - timedelta(minutes=15)  # Sau timedelta(hours=3) pentru test
     for url in FEEDS:
         feed = feedparser.parse(url)
         for entry in feed.entries:
@@ -39,16 +40,17 @@ def fetch_recent_articles():
                     articles.append(article_line)
     return articles
 
-def send_to_telegram(text):
+async def send_to_telegram(bot: Bot, text):
     if text:
-        Bot(token=TELEGRAM_TOKEN).send_message(
+        await bot.send_message(
             chat_id=TELEGRAM_CHAT_ID,
             text=text,
             parse_mode="HTML",
             disable_web_page_preview=True
         )
 
-def main():
+async def main():
+    bot = Bot(token=TELEGRAM_TOKEN)
     items = fetch_recent_articles()
     if not items:
         return
@@ -56,12 +58,11 @@ def main():
     header = "🕒 <b>Știrile din ultimul sfert de oră</b>\n\n"
     message = header
     for item in items:
-        # Check before adding the next item to stay under the character limit
         if len(message) + len(item) + 1 > MAX_LENGTH:
             break
         message += item + "\n"
 
-    send_to_telegram(message.strip())
+    await send_to_telegram(bot, message.strip())
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
