@@ -1,1 +1,0 @@
-cron: python bot.py
