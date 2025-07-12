@@ -28,7 +28,7 @@ MAX_LENGTH = 4000
 
 def fetch_recent_articles():
     articles = []
-    cutoff = datetime.utcnow() - timedelta(minutes=15)
+    cutoff = datetime.utcnow() - timedelta(minutes=30)
     for url in RSS_FEEDS.values():
         feed = feedparser.parse(url)
         for entry in feed.entries:
@@ -55,7 +55,7 @@ async def main():
     if not items:
         return
 
-    header = "📰 <b>Știrile din ultimul sfert de oră</b>\n\n"
+    header = "🕧 <b>Știrile din ultima jumătate de oră</b>\n\n"
     divider = "\n────────────\n"
     message = header
 
