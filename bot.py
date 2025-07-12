@@ -27,7 +27,7 @@ MAX_LENGTH = 4000
 
 def fetch_recent_articles():
     articles = []
-    cutoff = datetime.now() - timedelta(minutes=15)  # Sau timedelta(hours=3) pentru test
+    cutoff = datetime.now() - timedelta(minutes=43)  # Sau timedelta(hours=3) pentru test
     for url in FEEDS:
         feed = feedparser.parse(url)
         for entry in feed.entries:
