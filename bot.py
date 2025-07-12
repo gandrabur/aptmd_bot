@@ -1,19 +1,17 @@
 import os
 import feedparser
 import html
+import asyncio
 from datetime import datetime, timedelta
 from telegram import Bot
 from telegram.constants import ParseMode
 from dotenv import load_dotenv
-import asyncio
 
-# Load environment variables
 load_dotenv()
 
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
-# Allowed RSS feeds (politic is excluded)
 RSS_FEEDS = {
     "actual": "https://telegraph.md/category/actual/feed/",
     "social": "https://telegraph.md/category/social/feed/",
@@ -30,8 +28,8 @@ MAX_LENGTH = 4000
 
 def fetch_recent_articles():
     articles = []
-    cutoff = datetime.now() - timedelta(minutes=15)
-    for category, url in RSS_FEEDS.items():
+    cutoff = datetime.utcnow() - timedelta(minutes=15)
+    for url in RSS_FEEDS.values():
         feed = feedparser.parse(url)
         for entry in feed.entries:
             if hasattr(entry, 'published_parsed'):
@@ -39,19 +37,18 @@ def fetch_recent_articles():
                 if published > cutoff:
                     title = html.escape(entry.title.strip())
                     link = entry.link.strip()
-                    line = f"◉ <b><a href='{link}'>{title}</a></b>"
-                    articles.append(line)
+                    # larger bullet ◉ 
+                    articles.append(f"◉ <b><a href='{link}'>{title}</a></b>")
     return articles
 
-async def send_to_telegram(text):
-    if text:
-        bot = Bot(token=TELEGRAM_TOKEN)
-        await bot.send_message(
-            chat_id=TELEGRAM_CHAT_ID,
-            text=text,
-            parse_mode=ParseMode.HTML,
-            disable_web_page_preview=True
-        )
+async def send_to_telegram(text: str):
+    bot = Bot(token=TELEGRAM_TOKEN)
+    await bot.send_message(
+        chat_id=TELEGRAM_CHAT_ID,
+        text=text,
+        parse_mode=ParseMode.HTML,
+        disable_web_page_preview=True
+    )
 
 async def main():
     items = fetch_recent_articles()
@@ -59,16 +56,23 @@ async def main():
         return
 
     header = "📰 <b>Știrile din ultimul sfert de oră</b>\n\n"
-    message = header
     divider = "\n────────────\n"
+    message = header
 
     for item in items:
-        next_piece = item + divider
-        if len(message) + len(next_piece) > MAX_LENGTH:
+        chunk = item + divider
+        if len(message) + len(chunk) > MAX_LENGTH:
             break
-        message += next_piece
+        message += chunk
 
+    # remove trailing divider
     message = message.rstrip(divider)
+
+    # footer in italics with active link
+    footer = "\n<i>Pentru mai multe detalii, vizitează <a href='https://telegraph.md'>telegraph.md</a></i>"
+    if len(message) + len(footer) <= MAX_LENGTH:
+        message += footer
+
     await send_to_telegram(message.strip())
 
 if __name__ == "__main__":
