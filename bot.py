@@ -40,11 +40,11 @@ def fetch_recent_articles():
                     continue
 
             if hasattr(entry, 'published_parsed'):
-                published = datetime(*entry.published_parsed[:6])
-                if published > cutoff:
-                    title = html.escape(entry.title.strip())
-                    link = entry.link.strip()
-                    articles.append(f"◉ <b><a href='{link}'>{title}</a></b>")
+    published = datetime(*entry.published_parsed[:6], tzinfo=timezone.utc)
+    if published > cutoff:
+        title = html.escape(entry.title.strip())
+        link = entry.link.strip()
+        articles.append(f"◉ <b><a href='{link}'>{title}</a></b>")
     return articles
 
 async def send_to_telegram(text: str):
