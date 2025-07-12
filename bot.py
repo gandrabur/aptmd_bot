@@ -2,7 +2,7 @@ import os
 import feedparser
 import html
 import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from telegram import Bot
 from telegram.constants import ParseMode
 from dotenv import load_dotenv
@@ -21,18 +21,19 @@ RSS_FEEDS = {
     "comunicate": "https://telegraph.md/category/comunicate/feed/",
     "opinii": "https://telegraph.md/category/opinii/feed/",
     "parteneriate-media": "https://telegraph.md/category/parteneriate-media/feed/",
-    "publicitate": "https://telegraph.md/category/publicitate/feed/"
+    "publicitate": "https://telegraph.md/category/publicitate/feed/",
+    "politic": "https://telegraph.md/category/politic/feed/"
 }
 
 MAX_LENGTH = 4000
 
 def fetch_recent_articles():
     articles = []
-    cutoff = datetime.utcnow() - timedelta(minutes=30)
+    cutoff = datetime.now(timezone.utc) - timedelta(minutes=30)
     for url in RSS_FEEDS.values():
         feed = feedparser.parse(url)
         for entry in feed.entries:
-            # ➤ Excludere articole cu tagul "teloff"
+            # Excludere articole cu tagul "teloff"
             if hasattr(entry, "tags"):
                 tag_list = [tag.term.lower() for tag in entry.tags if hasattr(tag, "term")]
                 if "teloff" in tag_list:
@@ -73,7 +74,7 @@ async def main():
     # remove trailing divider
     message = message.rstrip(divider)
 
-    # footer în italics cu link activ
+    # footer in italics with active link
     footer = "\n\n<i>Pentru detalii, accesați <a href='https://telegraph.md'>telegraph.md</a></i>"
     if len(message) + len(footer) <= MAX_LENGTH:
         message += footer
