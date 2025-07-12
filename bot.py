@@ -3,7 +3,9 @@ import feedparser
 import html
 from datetime import datetime, timedelta
 from telegram import Bot
+from telegram.constants import ParseMode
 from dotenv import load_dotenv
+import asyncio
 
 # Load environment variables
 load_dotenv()
@@ -41,16 +43,17 @@ def fetch_recent_articles():
                     articles.append(line)
     return articles
 
-def send_to_telegram(text):
+async def send_to_telegram(text):
     if text:
-        Bot(token=TELEGRAM_TOKEN).send_message(
+        bot = Bot(token=TELEGRAM_TOKEN)
+        await bot.send_message(
             chat_id=TELEGRAM_CHAT_ID,
             text=text,
-            parse_mode="HTML",
+            parse_mode=ParseMode.HTML,
             disable_web_page_preview=True
         )
 
-def main():
+async def main():
     items = fetch_recent_articles()
     if not items:
         return
@@ -66,7 +69,7 @@ def main():
         message += next_piece
 
     message = message.rstrip(divider)
-    send_to_telegram(message.strip())
+    await send_to_telegram(message.strip())
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
