@@ -39,7 +39,7 @@ def fetch_recent_articles():
                 if published > cutoff:
                     title = html.escape(entry.title.strip())
                     link = entry.link.strip()
-                    line = f"• <b><a href='{link}'>{title}</a></b>"
+                    line = f"◉ <b><a href='{link}'>{title}</a></b>"
                     articles.append(line)
     return articles
 
