@@ -69,7 +69,7 @@ async def main():
     message = message.rstrip(divider)
 
     # footer in italics with active link
-    footer = "\n\n<i>Pentru mai multe detalii, vizitează <a href='https://telegraph.md'>telegraph.md</a></i>"
+    footer = "\n\n<i>Pentru detalii, accesați <a href='https://telegraph.md'>telegraph.md</a></i>"
     if len(message) + len(footer) <= MAX_LENGTH:
         message += footer
 
