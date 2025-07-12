@@ -62,7 +62,7 @@ async def main():
         return
 
     header = "🕧 <b>Știrile din ultima jumătate de oră</b>\n\n"
-    divider = "\n────────────\n"
+    divider = "\n──\n"
     message = header
 
     for item in items:
