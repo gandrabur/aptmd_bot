@@ -41,7 +41,7 @@ MAX_LENGTH = 4000
 
 def fetch_recent_articles():
     articles = []
-    cutoff = datetime.now() - timedelta(minutes=60)
+    cutoff = datetime.now() - timedelta(minutes=50)
     for category, url in RSS_FEEDS.items():
         feed = feedparser.parse(url)
         emoji = CATEGORY_EMOJI.get(category, "🔸")
