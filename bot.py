@@ -32,16 +32,17 @@ def fetch_recent_articles():
     for url in RSS_FEEDS.values():
         feed = feedparser.parse(url)
         for entry in feed.entries:
+            # ➤ Excludere articole cu tagul "teloff"
             if hasattr(entry, "tags"):
-    tag_list = [tag.term.lower() for tag in entry.tags if hasattr(tag, "term")]
-    if "teloff" in tag_list:
-        continue  # ignoră articolul dacă are tagul "teloff"
+                tag_list = [tag.term.lower() for tag in entry.tags if hasattr(tag, "term")]
+                if "teloff" in tag_list:
+                    continue
+
             if hasattr(entry, 'published_parsed'):
                 published = datetime(*entry.published_parsed[:6])
                 if published > cutoff:
                     title = html.escape(entry.title.strip())
                     link = entry.link.strip()
-                    # larger bullet ◉ 
                     articles.append(f"◉ <b><a href='{link}'>{title}</a></b>")
     return articles
 
@@ -72,7 +73,7 @@ async def main():
     # remove trailing divider
     message = message.rstrip(divider)
 
-    # footer in italics with active link
+    # footer în italics cu link activ
     footer = "\n\n<i>Pentru detalii, accesați <a href='https://telegraph.md'>telegraph.md</a></i>"
     if len(message) + len(footer) <= MAX_LENGTH:
         message += footer
