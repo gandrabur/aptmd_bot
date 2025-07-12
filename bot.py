@@ -28,7 +28,7 @@ MAX_LENGTH = 4000
 
 def fetch_recent_articles():
     articles = []
-    cutoff = datetime.now() - timedelta(minutes=21)
+    cutoff = datetime.now() - timedelta(minutes=15)
     for category, url in RSS_FEEDS.items():
         feed = feedparser.parse(url)
         for entry in feed.entries:
