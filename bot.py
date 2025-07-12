@@ -1,68 +1,86 @@
 import os
 import feedparser
 import html
-import asyncio
 from datetime import datetime, timedelta
 from telegram import Bot
 from dotenv import load_dotenv
 
+# Load environment variables
 load_dotenv()
 
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
-FEEDS = [
-    "https://telegraph.md/category/actual/feed/",
-    "https://telegraph.md/category/social/feed/",
-    "https://telegraph.md/category/economic/feed/",
-    "https://telegraph.md/category/externe/feed/",
-    "https://telegraph.md/category/lifestyle/feed/",
-    "https://telegraph.md/category/comunicate/feed/",
-    "https://telegraph.md/category/opinii/feed/",
-    "https://telegraph.md/category/parteneriate-media/feed/",
-    "https://telegraph.md/category/publicitate/feed/"
-]
+# Allowed RSS feeds (politic is excluded)
+RSS_FEEDS = {
+    "actual": "https://telegraph.md/category/actual/feed/",
+    "social": "https://telegraph.md/category/social/feed/",
+    "economic": "https://telegraph.md/category/economic/feed/",
+    "externe": "https://telegraph.md/category/externe/feed/",
+    "lifestyle": "https://telegraph.md/category/lifestyle/feed/",
+    "comunicate": "https://telegraph.md/category/comunicate/feed/",
+    "opinii": "https://telegraph.md/category/opinii/feed/",
+    "parteneriate-media": "https://telegraph.md/category/parteneriate-media/feed/",
+    "publicitate": "https://telegraph.md/category/publicitate/feed/"
+}
+
+# Emoji per category
+CATEGORY_EMOJI = {
+    "actual": "📰",
+    "social": "🧬",
+    "economic": "🏛️",
+    "externe": "🌍",
+    "lifestyle": "🎉",
+    "comunicate": "📢",
+    "opinii": "💬",
+    "parteneriate-media": "🤝",
+    "publicitate": "🎯"
+}
 
 MAX_LENGTH = 4000
 
 def fetch_recent_articles():
     articles = []
-    cutoff = datetime.now() - timedelta(minutes=43)  # Sau timedelta(hours=3) pentru test
-    for url in FEEDS:
+    cutoff = datetime.now() - timedelta(minutes=60)
+    for category, url in RSS_FEEDS.items():
         feed = feedparser.parse(url)
+        emoji = CATEGORY_EMOJI.get(category, "🔸")
         for entry in feed.entries:
             if hasattr(entry, 'published_parsed'):
                 published = datetime(*entry.published_parsed[:6])
                 if published > cutoff:
                     title = html.escape(entry.title.strip())
                     link = entry.link.strip()
-                    article_line = f"• <b><a href='{link}'>{title}</a></b>"
-                    articles.append(article_line)
+                    line = f"{emoji} <b><a href='{link}'>{title}</a></b>"
+                    articles.append(line)
     return articles
 
-async def send_to_telegram(bot: Bot, text):
+def send_to_telegram(text):
     if text:
-        await bot.send_message(
+        Bot(token=TELEGRAM_TOKEN).send_message(
             chat_id=TELEGRAM_CHAT_ID,
             text=text,
             parse_mode="HTML",
             disable_web_page_preview=True
         )
 
-async def main():
-    bot = Bot(token=TELEGRAM_TOKEN)
+def main():
     items = fetch_recent_articles()
     if not items:
         return
 
-    header = "🕒 <b>Știrile din ultimul sfert de oră</b>\n\n"
+    header = "🗞️ <b>Știrile din ultimul sfert de oră</b>\n\n"
     message = header
+    divider = "\n────────────\n"
+    
     for item in items:
-        if len(message) + len(item) + 1 > MAX_LENGTH:
+        next_piece = item + divider
+        if len(message) + len(next_piece) > MAX_LENGTH:
             break
-        message += item + "\n"
+        message += next_piece
 
-    await send_to_telegram(bot, message.strip())
+    message = message.rstrip(divider)  # Remove the last divider
+    send_to_telegram(message.strip())
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
