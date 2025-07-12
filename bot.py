@@ -32,6 +32,10 @@ def fetch_recent_articles():
     for url in RSS_FEEDS.values():
         feed = feedparser.parse(url)
         for entry in feed.entries:
+            if hasattr(entry, "tags"):
+    tag_list = [tag.term.lower() for tag in entry.tags if hasattr(tag, "term")]
+    if "teloff" in tag_list:
+        continue  # ignoră articolul dacă are tagul "teloff"
             if hasattr(entry, 'published_parsed'):
                 published = datetime(*entry.published_parsed[:6])
                 if published > cutoff:
