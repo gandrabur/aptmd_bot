@@ -26,14 +26,58 @@ RSS_FEEDS = {
 }
 
 MAX_LENGTH = 4000
+RECENT_FILE = "recent_articles.txt"
+RECENT_WINDOW = timedelta(minutes=60)
+
+def load_recent_links():
+    recent_links = set()
+    now = datetime.now(timezone.utc)
+
+    if os.path.exists(RECENT_FILE):
+        with open(RECENT_FILE, "r", encoding="utf-8") as f:
+            for line in f:
+                try:
+                    timestamp_str, link = line.strip().split(" ", 1)
+                    timestamp = datetime.fromisoformat(timestamp_str)
+                    if now - timestamp <= RECENT_WINDOW:
+                        recent_links.add(link)
+                except Exception:
+                    continue
+    return recent_links
+
+def save_new_links(links):
+    now = datetime.now(timezone.utc)
+    lines = []
+
+    # Păstrăm doar linkurile valabile (nu mai vechi de 60 min)
+    if os.path.exists(RECENT_FILE):
+        with open(RECENT_FILE, "r", encoding="utf-8") as f:
+            for line in f:
+                try:
+                    timestamp_str, link = line.strip().split(" ", 1)
+                    timestamp = datetime.fromisoformat(timestamp_str)
+                    if now - timestamp <= RECENT_WINDOW:
+                        lines.append(f"{timestamp_str} {link}")
+                except Exception:
+                    continue
+
+    # Adăugăm linkurile noi
+    for link in links:
+        lines.append(f"{now.isoformat()} {link}")
+
+    with open(RECENT_FILE, "w", encoding="utf-8") as f:
+        for line in lines:
+            f.write(line + "\n")
 
 def fetch_recent_articles():
     articles = []
+    new_links = []
     cutoff = datetime.now(timezone.utc) - timedelta(minutes=30)
+    recent_links = load_recent_links()
+
     for url in RSS_FEEDS.values():
         feed = feedparser.parse(url)
         for entry in feed.entries:
-            # Excludere articole cu tagul "teloff"
             if hasattr(entry, "tags"):
                 tag_list = [tag.term.lower() for tag in entry.tags if hasattr(tag, "term")]
                 if "teloff" in tag_list:
@@ -42,10 +86,14 @@ def fetch_recent_articles():
             if hasattr(entry, 'published_parsed'):
                 published = datetime(*entry.published_parsed[:6], tzinfo=timezone.utc)
                 if published > cutoff:
-                    title = html.escape(entry.title.strip())
                     link = entry.link.strip()
+                    if link in recent_links:
+                        continue
+                    title = html.escape(entry.title.strip())
                     articles.append(f"◉ <b><a href='{link}'>{title}</a></b>")
-    return articles
+                    new_links.append(link)
+
+    return articles, new_links
 
 async def send_to_telegram(text: str):
     bot = Bot(token=TELEGRAM_TOKEN)
@@ -57,7 +105,7 @@ async def send_to_telegram(text: str):
     )
 
 async def main():
-    items = fetch_recent_articles()
+    items, new_links = fetch_recent_articles()
     if not items:
         return
 
@@ -71,15 +119,14 @@ async def main():
             break
         message += chunk
 
-    # remove trailing divider
     message = message.rstrip(divider)
 
-    # footer in italics with active link
     footer = "\n\n<i>Pentru detalii, accesați <a href='https://telegraph.md'>telegraph.md</a></i>"
     if len(message) + len(footer) <= MAX_LENGTH:
         message += footer
 
     await send_to_telegram(message.strip())
+    save_new_links(new_links)
 
 if __name__ == "__main__":
     asyncio.run(main())
