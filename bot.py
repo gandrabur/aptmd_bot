@@ -27,7 +27,7 @@ RSS_FEEDS = {
 
 MAX_LENGTH = 4000
 RECENT_FILE = "recent_articles.txt"
-RECENT_WINDOW = timedelta(minutes=60)
+RECENT_WINDOW = timedelta(minutes=120)
 
 def load_recent_links():
     recent_links = set()
@@ -49,7 +49,7 @@ def save_new_links(links):
     now = datetime.now(timezone.utc)
     lines = []
 
-    # Păstrăm doar linkurile valabile (nu mai vechi de 60 min)
+    # Păstrăm doar linkurile valabile (nu mai vechi de 120 min)
     if os.path.exists(RECENT_FILE):
         with open(RECENT_FILE, "r", encoding="utf-8") as f:
             for line in f:
