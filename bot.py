@@ -109,7 +109,7 @@ async def main():
     if not items:
         return
 
-    header = "🕧 <b>Știrile din ultima jumătate de oră</b>\n\n"
+    header = "🕧 <b>Știrile din ultima oră</b>\n\n"
     divider = "\n──\n"
     message = header
 
