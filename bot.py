@@ -72,7 +72,7 @@ def save_new_links(links):
 def fetch_recent_articles():
     articles = []
     new_links = []
-    cutoff = datetime.now(timezone.utc) - timedelta(minutes=30)
+    cutoff = datetime.now(timezone.utc) - timedelta(minutes=60)
     recent_links = load_recent_links()
 
     for url in RSS_FEEDS.values():
